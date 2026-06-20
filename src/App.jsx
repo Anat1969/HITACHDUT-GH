@@ -130,6 +130,10 @@ const CSS = `
   --inset:inset 0 2px 4px rgba(0,0,0,.35);
   --sh1:0 1px 3px rgba(0,0,0,.4);--sh2:0 4px 16px rgba(0,0,0,.45);--sh3:0 12px 32px rgba(0,0,0,.5);
   --font:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  --r1:4px;--r2:8px;--r3:12px;--r4:16px;
+  --sp1:4px;--sp2:8px;--sp3:16px;--sp4:24px;--sp5:32px;--sp6:48px;
+  --bw1:0.5px;--bw2:1px;--bw3:1.5px;
+  --icon-sm:14px;--icon-md:18px;--icon-lg:22px;
 }
 body{font-family:var(--font);background:var(--bg0);color:var(--t1);direction:rtl;line-height:1.5}
 .frame{margin:6px;height:calc(100vh - 12px);border-radius:14px;overflow:hidden;border:1.5px solid var(--edge2);
@@ -145,6 +149,7 @@ body{font-family:var(--font);background:var(--bg0);color:var(--t1);direction:rtl
 .sb-lbl{padding:14px 14px 4px;font-size:7px;text-transform:uppercase;letter-spacing:2.5px;color:var(--t4);font-weight:800}
 .sb-btn{display:block;width:100%;padding:8px 14px;border:none;background:none;color:var(--t2);font-size:11px;cursor:pointer;text-align:right;direction:rtl;transition:all .15s;border-right:2px solid transparent}
 .sb-btn:hover{background:var(--gold-s);color:var(--gold);border-right-color:var(--gold)}
+.sb-btn:active{background:var(--bg);box-shadow:var(--inset)}
 .sb-btn.on{background:var(--blue-s);color:var(--blue);border-right-color:var(--blue)}
 .sb-sub{display:block;width:100%;padding:3px 14px 3px 26px;border:none;background:none;color:var(--t4);font-size:9px;cursor:pointer;text-align:right;transition:color .1s}
 .sb-sub:hover{color:var(--gold)}.sb-sub.on{color:var(--blue)}
@@ -152,8 +157,8 @@ body{font-family:var(--font);background:var(--bg0);color:var(--t1);direction:rtl
 /* Page nav pills */
 .sb-nav{padding:8px;border-bottom:1px solid var(--edge);display:flex;flex-wrap:wrap;gap:4px}
 .pnav{flex:1;min-width:60px;padding:6px 4px;border:1px solid var(--edge2);border-radius:16px;background:linear-gradient(180deg,var(--sf2),var(--sf));color:var(--t3);font-size:9px;cursor:pointer;text-align:center;transition:all .15s;box-shadow:var(--sh1)}
-.pnav:hover{color:var(--t2);border-color:var(--edge3)}
-.pnav:active{box-shadow:var(--inset)}
+.pnav:hover{color:var(--t1);border-color:rgba(196,165,90,.15);box-shadow:var(--sh1),0 0 6px var(--gold-g)}
+.pnav:active{transform:translateY(1px);box-shadow:var(--inset);transition-duration:.05s}
 .pnav.on{background:linear-gradient(180deg,#4a7ec8,#3a6eb8);color:#fff;border-color:rgba(91,143,212,.4);box-shadow:0 0 14px var(--blue-g)}
 
 /* Main */
@@ -166,7 +171,11 @@ body{font-family:var(--font);background:var(--bg0);color:var(--t1);direction:rtl
 
 /* Pills */
 .pill{padding:5px 14px;border:1px solid var(--edge2);border-radius:18px;background:linear-gradient(180deg,var(--sf3),var(--sf));font-size:10px;cursor:pointer;color:var(--t2);transition:all .15s;box-shadow:var(--sh1);white-space:nowrap;font-family:var(--font)}
-.pill:hover{color:var(--t1);border-color:var(--edge3)}.pill:active{box-shadow:var(--inset)}
+.pill:hover{color:var(--t1);border-color:rgba(196,165,90,.2);background:linear-gradient(180deg,var(--sf4),var(--sf2));box-shadow:var(--sh1),0 0 8px var(--gold-g)}
+.pill:active:not(:disabled){transform:translateY(1px);box-shadow:var(--inset);transition-duration:.05s}
+.pill:disabled,.pill[disabled]{opacity:.4;cursor:not-allowed;box-shadow:none;pointer-events:none;border-color:var(--edge)}
+.pill.loading{position:relative;color:transparent;pointer-events:none}
+.pill.loading::after{content:"";position:absolute;inset:0;margin:auto;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
 .pill.bl{background:linear-gradient(180deg,#6a9ad8,#4a7ec8);color:#fff;border-color:rgba(91,143,212,.4);box-shadow:0 0 12px var(--blue-g)}
 .pill.gn{background:linear-gradient(180deg,#68c488,#4daa6d);color:#fff;border-color:rgba(93,186,125,.3)}
 .pill.gld{color:var(--gold);border-color:rgba(196,165,90,.2)}
@@ -199,7 +208,9 @@ body{font-family:var(--font);background:var(--bg0);color:var(--t1);direction:rtl
 /* Card */
 .cd{background:linear-gradient(180deg,var(--sf3),var(--sf));border:1px solid var(--edge2);border-radius:8px;margin:4px;transition:all .15s;position:relative;overflow:hidden;box-shadow:var(--sh1),inset 0 -1px 3px rgba(0,0,0,.1)}
 .cd::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 20%,rgba(255,255,255,.05) 50%,transparent 80%)}
+.cd::after{content:"";position:absolute;top:0;left:-100%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.03),transparent);transition:left .5s ease;pointer-events:none}
 .cd:hover{border-color:rgba(196,165,90,.12);box-shadow:var(--sh2),0 0 10px var(--gold-g)}
+.cd:hover::after{left:100%}
 .cd.drag-over{border-color:var(--blue);box-shadow:0 0 16px var(--blue-g)}
 .ch{display:flex;align-items:center;gap:5px;padding:7px 10px}
 .c-grip{cursor:grab;color:var(--t4);font-size:9px;user-select:none;letter-spacing:-1px}.c-grip:hover{color:var(--gold)}.c-grip:active{cursor:grabbing}
@@ -216,6 +227,7 @@ body{font-family:var(--font);background:var(--bg0);color:var(--t1);direction:rtl
 .toggle.skipped,.toggle.needs_more{background:linear-gradient(180deg,#c49550,#a48040);border-color:rgba(196,165,90,.4);box-shadow:var(--inset),0 0 8px var(--gold-g)}.toggle.skipped .thumb,.toggle.needs_more .thumb{right:8px}
 .c-tgl{border:none;background:none;font-size:8px;color:var(--t4);cursor:pointer;padding:2px 5px;border-radius:4px;transition:all .1s}
 .c-tgl:hover{color:var(--gold);background:var(--gold-s)}
+.c-tgl:active{transform:scale(.92)}
 .c-bd{padding:3px 10px 10px;display:none}.c-bd.open{display:block}
 .c-f{margin-bottom:5px}
 .c-f label{display:block;font-size:7px;font-weight:700;color:var(--t4);margin-bottom:2px;letter-spacing:.4px;text-transform:uppercase}
@@ -224,6 +236,7 @@ body{font-family:var(--font);background:var(--bg0);color:var(--t1);direction:rtl
 .add-bar{display:flex;flex-wrap:wrap;gap:3px;padding:6px;border-top:1px solid var(--edge)}
 .ab{padding:3px 9px;border:1px dashed var(--t4);border-radius:16px;font-size:7px;cursor:pointer;background:none;color:var(--t4);transition:all .15s}
 .ab:hover{border-color:var(--blue);border-style:solid;color:var(--blue);background:var(--blue-s);box-shadow:0 0 10px var(--blue-g)}
+.ab:active{transform:translateY(1px);box-shadow:var(--inset)}
 
 /* Seg progress */
 .seg-bar{height:3px;background:var(--bg);display:flex;gap:1px;padding:0 1px}
@@ -234,17 +247,20 @@ body{font-family:var(--font);background:var(--bg0);color:var(--t1);direction:rtl
 .dash-full{grid-column:1/-1}
 .dcard{background:linear-gradient(180deg,var(--sf2),var(--sf));border:1px solid var(--edge2);border-radius:12px;padding:16px;box-shadow:var(--sh2);position:relative;overflow:hidden}
 .dcard::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 10%,rgba(255,255,255,.06) 50%,transparent 90%)}
+.dcard::after,.tool-card::after{content:"";position:absolute;top:0;left:-100%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.02),transparent);transition:left .6s ease;pointer-events:none}
+.dcard:hover::after,.tool-card:hover::after{left:100%}
 .dcard h3{font-size:12px;font-weight:600;color:var(--t1);margin-bottom:3px}
 .dcard p{font-size:9px;color:var(--t3);line-height:1.4}
 .d-stats{display:flex;gap:16px;margin-top:10px}
 .d-stat{text-align:center}.d-stat .n{font-size:26px;font-weight:700}.d-stat .l{font-size:7px;color:var(--t4);margin-top:2px;text-transform:uppercase;letter-spacing:.8px}
 .d-prog{height:6px;background:var(--bg);border-radius:3px;margin-top:8px;overflow:hidden;display:flex;gap:1px;padding:1px;box-shadow:var(--inset)}
-.d-prog div{height:100%;border-radius:2px}
+.d-prog div{height:100%;border-radius:2px;animation:pulse 2.5s ease-in-out infinite}
 
 /* List items — gold hover */
 .li{display:flex;align-items:center;gap:8px;padding:7px 8px;border-bottom:1px solid var(--edge);font-size:10px;color:var(--t2);cursor:pointer;transition:all .15s;border-radius:6px;margin-bottom:1px}
 .li:last-child{border-bottom:none}
 .li:hover{background:var(--gold-s);color:var(--gold)}
+.li:active{box-shadow:var(--inset)}
 .li .bp{width:50px;height:4px;background:var(--bg);border-radius:2px;overflow:hidden;flex-shrink:0;box-shadow:var(--inset)}
 .li .bp div{height:100%;border-radius:2px}
 
@@ -256,7 +272,7 @@ body{font-family:var(--font);background:var(--bg0);color:var(--t1);direction:rtl
 /* Teach */
 .teach{max-width:680px;margin:0 auto}
 .t-prog{height:4px;background:var(--bg);border-radius:2px;margin-bottom:14px;overflow:hidden;box-shadow:var(--inset)}
-.t-prog div{height:100%;background:linear-gradient(90deg,var(--blue),#7aace0);box-shadow:0 0 10px var(--blue-g);transition:width .3s}
+.t-prog div{height:100%;background:linear-gradient(90deg,var(--blue),#7aace0);box-shadow:0 0 10px var(--blue-g);transition:width .3s;animation:pulse 2s ease-in-out infinite}
 .t-card{background:linear-gradient(180deg,var(--sf3),var(--sf));border:1px solid var(--edge2);border-radius:14px;padding:28px;box-shadow:var(--sh3);position:relative;overflow:hidden}
 .t-card::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 5%,rgba(255,255,255,.08) 50%,transparent 95%)}
 .t-card h2{font-size:20px;font-weight:600;margin-bottom:6px;line-height:1.4}
@@ -270,6 +286,7 @@ body{font-family:var(--font);background:var(--bg0);color:var(--t1);direction:rtl
 .tool-card{background:linear-gradient(180deg,var(--sf2),var(--sf));border:1px solid var(--edge2);border-radius:10px;padding:14px;margin-bottom:8px;box-shadow:var(--sh1);transition:all .15s;cursor:pointer;position:relative;overflow:hidden}
 .tool-card::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent)}
 .tool-card:hover{border-color:rgba(196,165,90,.12);box-shadow:var(--sh2),0 0 10px var(--gold-g)}
+.tool-card:active{transform:translateY(1px);box-shadow:var(--inset)}
 .tool-card h4{font-size:12px;font-weight:600;color:var(--t1);margin-bottom:2px}
 .tool-card p{font-size:9px;color:var(--t3);line-height:1.4}
 .tool-ed{padding:12px;background:var(--bg2);border-radius:8px;margin-top:6px}
@@ -278,6 +295,7 @@ body{font-family:var(--font);background:var(--bg0);color:var(--t1);direction:rtl
 /* Task row */
 .task-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:linear-gradient(180deg,var(--sf2),var(--sf));border:1px solid var(--edge2);border-radius:8px;margin-bottom:5px;box-shadow:var(--sh1);transition:all .15s}
 .task-row:hover{border-color:rgba(196,165,90,.12);box-shadow:0 0 8px var(--gold-g)}
+.task-row:active{box-shadow:var(--inset)}
 .task-row .task-title{flex:1;border:none;background:none;font-size:10px;color:var(--t1);direction:rtl;text-align:right;font-family:var(--font)}
 .task-row .task-title:focus{outline:none;background:var(--sf3);padding:1px 5px;border-radius:4px}
 
@@ -287,20 +305,35 @@ body{font-family:var(--font);background:var(--bg0);color:var(--t1);direction:rtl
 .lnk-h h3{font-size:9px;color:var(--t3)}
 .lnk-b{padding:0 18px 8px;display:flex;flex-wrap:wrap;gap:4px}
 .chip{display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border:1px solid var(--edge2);border-radius:16px;font-size:8px;color:var(--blue);background:linear-gradient(180deg,var(--sf2),var(--sf));transition:all .15s;box-shadow:var(--sh1)}
-.chip:hover{box-shadow:0 0 10px var(--blue-g)}.chip a{color:inherit;text-decoration:none}
+.chip:hover{border-color:rgba(196,165,90,.15);box-shadow:0 0 10px var(--gold-g)}.chip:active{transform:translateY(1px);box-shadow:var(--inset)}
+.chip a{color:inherit;text-decoration:none}
 .chip .x{color:var(--red);cursor:pointer;background:none;border:none;font-size:9px;opacity:.4}.chip .x:hover{opacity:1}
 
 /* Modal */
-.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(6px)}
-.mdl{background:linear-gradient(180deg,var(--sf3),var(--sf));border:1.5px solid var(--edge3);border-radius:14px;padding:20px;width:90%;max-width:400px;direction:rtl;box-shadow:var(--sh3);max-height:80vh;overflow-y:auto}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(6px);animation:fadeIn .2s ease-out}
+.mdl{background:linear-gradient(180deg,var(--sf3),var(--sf));border:var(--bw3) solid var(--edge3);border-radius:var(--r4);padding:20px;width:90%;max-width:400px;direction:rtl;box-shadow:var(--sh3),0 0 60px rgba(0,0,0,.4);max-height:80vh;overflow-y:auto;animation:fadeIn .25s ease-out;position:relative;overflow:hidden}
+.mdl::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 5%,rgba(255,255,255,.08) 50%,transparent 95%)}
 .mdl h3{font-size:13px;font-weight:600;margin-bottom:8px;color:var(--t1)}
 .mdl .inp{margin-bottom:5px}
 .mr{display:flex;gap:6px;margin-top:8px}
 
 .empty{text-align:center;padding:24px;color:var(--t4);font-size:10px}
-.toast{position:fixed;bottom:12px;left:12px;padding:5px 14px;background:linear-gradient(180deg,#68c488,#4daa6d);color:#fff;font-size:8px;border-radius:16px;opacity:0;transition:opacity .2s;z-index:50;font-weight:600;box-shadow:0 0 14px var(--green-g)}
-.toast.on{opacity:1}
+.toast{position:fixed;bottom:12px;left:12px;padding:5px 14px;background:linear-gradient(180deg,#68c488,#4daa6d);color:#fff;font-size:8px;border-radius:var(--r4);transform:translateY(20px);opacity:0;transition:all .25s ease-out;z-index:50;font-weight:600;box-shadow:0 0 14px var(--green-g);display:flex;align-items:center;gap:var(--sp2)}
+.toast.on{opacity:1;transform:translateY(0)}
 .search-global{width:100%;margin-bottom:12px}
+/* Focus-visible rings */
+:focus-visible{outline:none}
+.pill:focus-visible,.pnav:focus-visible,.sb-btn:focus-visible,.ab:focus-visible,.c-tgl:focus-visible,.chip:focus-visible{outline:none;box-shadow:0 0 0 2px var(--bg0),0 0 0 4px var(--blue)!important}
+.inp:focus-visible{outline:none;box-shadow:var(--inset),0 0 0 2px var(--blue-g)!important;border-color:rgba(91,143,212,.4)}
+.c-sel:focus-visible{outline:none;box-shadow:0 0 0 2px var(--bg0),0 0 0 4px var(--blue)}
+.toggle:focus-visible{outline:none;box-shadow:0 0 0 2px var(--bg0),0 0 0 4px var(--blue)!important}
+
+/* Animations */
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+
 @media(max-width:768px){.sb{width:52px;min-width:52px}.sb .sb-head,.sb-lbl,.sb-btn,.sb-sub{display:none}.sb-nav{flex-direction:column}.dash{grid-template-columns:1fr}.frame{margin:0;border-radius:0;height:100vh}}
 `;
 
@@ -491,7 +524,7 @@ export default function App() {
                         <span className="c-tag" style={{ background: tp.tone }}>{tp.label}</span>
                         <input className="c-ti" value={card.title} onChange={e => up(d => { d.sessions[si].blocks[bi].cards[ci].title = e.target.value; })} placeholder="כותרת..." />
                         <span className="c-mn">{card.minutes > 0 ? `${card.minutes}׳` : ""}</span>
-                        <div className={`toggle ${card.status}`} onClick={() => up(d => { const cur = SCYCLE.indexOf(d.sessions[si].blocks[bi].cards[ci].status); d.sessions[si].blocks[bi].cards[ci].status = SCYCLE[(cur + 1) % SCYCLE.length]; })}><div className="thumb" /></div>
+                        <div className={`toggle ${card.status}`} tabIndex={0} role="switch" onClick={() => up(d => { const cur = SCYCLE.indexOf(d.sessions[si].blocks[bi].cards[ci].status); d.sessions[si].blocks[bi].cards[ci].status = SCYCLE[(cur + 1) % SCYCLE.length]; })}><div className="thumb" /></div>
                         <button className="c-tgl" onClick={() => setOpenC(p => ({ ...p, [card.id]: !p[card.id] }))}>{isOpen ? "סגור" : "עוד"}</button>
                       </div>
                       <div className={`c-bd ${isOpen ? "open" : ""}`}>
@@ -521,7 +554,7 @@ export default function App() {
               return (<><div className="t-card">
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
                   <span className="c-tag" style={{ background: tp.tone, fontSize: 9, padding: "3px 10px" }}>{tp.label}</span>
-                  <div className={`toggle ${c.status}`} style={{ width: 30, height: 16 }} onClick={() => up(d => { const cur = SCYCLE.indexOf(d.sessions[si].blocks[c.bi].cards[c.ci].status); d.sessions[si].blocks[c.bi].cards[c.ci].status = SCYCLE[(cur + 1) % SCYCLE.length]; })}><div className="thumb" style={{ width: 10, height: 10, top: 2 }} /></div>
+                  <div className={`toggle ${c.status}`} tabIndex={0} role="switch" style={{ width: 30, height: 16 }} onClick={() => up(d => { const cur = SCYCLE.indexOf(d.sessions[si].blocks[c.bi].cards[c.ci].status); d.sessions[si].blocks[c.bi].cards[c.ci].status = SCYCLE[(cur + 1) % SCYCLE.length]; })}><div className="thumb" style={{ width: 10, height: 10, top: 2 }} /></div>
                   <span style={{ fontSize: 8, color: st?.tone }}>{st?.label}</span>
                 </div>
                 <div className="t-block" style={{ fontSize: 8, color: "var(--t4)" }}>{c.bTitle}</div>
@@ -609,7 +642,7 @@ export default function App() {
               </div>);
             })() : (<div>
               {data.tasks.map((t, i) => (<div key={t.id} className="task-row">
-                <div className={`toggle ${t.status}`} style={{ width: 30, height: 16 }} onClick={() => up(d => { const cur = SCYCLE.indexOf(d.tasks[i].status); d.tasks[i].status = SCYCLE[(cur + 1) % SCYCLE.length]; })}><div className="thumb" style={{ width: 10, height: 10, top: 2 }} /></div>
+                <div className={`toggle ${t.status}`} tabIndex={0} role="switch" style={{ width: 30, height: 16 }} onClick={() => up(d => { const cur = SCYCLE.indexOf(d.tasks[i].status); d.tasks[i].status = SCYCLE[(cur + 1) % SCYCLE.length]; })}><div className="thumb" style={{ width: 10, height: 10, top: 2 }} /></div>
                 <input className="task-title" value={t.title} onChange={e => up(d => { d.tasks[i].title = e.target.value; })} placeholder="משימה..." />
                 <span className="tag" style={{ color: PRIORITIES[t.priority]?.tone }}>{PRIORITIES[t.priority]?.label}</span>
                 <span className="meta">{STATUSES[t.status]?.label}</span>
@@ -622,6 +655,6 @@ export default function App() {
         </div>
       </div>
     </div></div>
-    <div className={`toast ${toast ? "on" : ""}`}>נשמר</div>
+    <div className={`toast ${toast ? "on" : ""}`}>&#10003; נשמר</div>
   </>);
 }
