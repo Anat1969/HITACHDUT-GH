@@ -229,18 +229,19 @@ const PromptImage = ({ promptId, images, setImages }) => {
 };
 
 /* ─── Section Side Image ─── */
-const SectionSideImage = ({ sectionId, promptImages, setPromptImages }) => {
+const SectionSideImage = ({ sectionId, images, setImages }) => {
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
-  const promptId = SECTION_PROMPT_MAP[sectionId];
-  const img = promptId && promptImages[promptId];
+  const [dragOver, setDragOver] = useState(false);
+  const storageId = `sec-${sectionId}`;
+  const img = images[storageId];
 
   const handleFile = async (file) => {
-    if (!file || !file.type.startsWith("image/") || !promptId) return;
+    if (!file || !file.type.startsWith("image/")) return;
     setUploading(true);
     try {
-      const publicUrl = await uploadPromptImage(promptId, file);
-      setPromptImages(prev => ({ ...prev, [promptId]: publicUrl }));
+      const publicUrl = await uploadPromptImage(storageId, file);
+      setImages(prev => ({ ...prev, [storageId]: publicUrl }));
     } catch (err) {
       console.error("Upload failed:", err);
     } finally {
@@ -249,20 +250,44 @@ const SectionSideImage = ({ sectionId, promptImages, setPromptImages }) => {
   };
 
   const removeImage = async () => {
-    if (!promptId) return;
     try {
-      await deletePromptImage(promptId);
-      setPromptImages(prev => { const n = { ...prev }; delete n[promptId]; return n; });
+      await deletePromptImage(storageId);
+      setImages(prev => { const n = { ...prev }; delete n[storageId]; return n; });
     } catch (err) {
       console.error("Delete failed:", err);
     }
   };
 
+  const handleDrop = (e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); };
+
+  const handlePaste = useCallback((e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        e.preventDefault();
+        handleFile(item.getAsFile());
+        return;
+      }
+    }
+  }, [storageId]);
+
+  useEffect(() => {
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+  }, [handlePaste]);
+
   return (
-    <div className="afa-side-image" style={{
-      flex:1, minWidth:0, position:"relative", overflow:"hidden",
-      display:"flex", alignItems:"center", justifyContent:"center",
-    }}>
+    <div className="afa-side-image"
+      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={handleDrop}
+      style={{
+        flex:1, minWidth:0, position:"relative", overflow:"hidden",
+        display:"flex", alignItems:"center", justifyContent:"center",
+        border: dragOver ? "2px dashed rgba(200,150,60,0.3)" : "2px dashed transparent",
+        transition:"border-color 0.3s",
+      }}>
       {img ? (
         <>
           <img src={img} alt="" style={{
@@ -284,7 +309,7 @@ const SectionSideImage = ({ sectionId, promptImages, setPromptImages }) => {
           style={{ cursor:"pointer", textAlign:"center", padding:20 }}
           onClick={() => fileRef.current?.click()}>
           <div style={{ fontSize:11, color:"rgba(200,160,80,0.15)", fontWeight:300 }}>
-            {uploading ? "מעלה..." : "לחצי להוסיף תמונת רקע"}
+            {uploading ? "מעלה..." : "גררי, הדביקי, או לחצי להוסיף תמונה"}
           </div>
           <input ref={fileRef} type="file" accept="image/*" style={{ display:"none" }}
             onChange={(e) => handleFile(e.target.files[0])} />
@@ -887,7 +912,7 @@ export default function AIforArchitects() {
               </main>
 
               {/* Side Image Panel */}
-              <SectionSideImage sectionId={sec.id} promptImages={promptImages} setPromptImages={setPromptImages} />
+              <SectionSideImage sectionId={sec.id} images={promptImages} setImages={setPromptImages} />
             </>
           )}
         </div>
