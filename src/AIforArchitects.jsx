@@ -25,6 +25,16 @@ const PROMPTS = [
   { id:"integration", title:"אינטגרציה", hook:"מבט-על על עיר שבה זרימות נתונים זורמות בין מבנים כמו תשתית בלתי נראית", prompt:"Documentary realism, Professional architecture photography, 16:9, aerial view of a city at dusk where subtle luminous data streams flow between buildings like invisible infrastructure, the streams follow the urban grid organically connecting structures to each other, warm amber light traces against deep blue twilight, architectural scale, No text, No words, No writing, No frame divisions" },
 ];
 
+const SECTION_PROMPT_MAP = {
+  opening: "corridor",
+  layers: "layers",
+  spectrum: "judgment",
+  twin: "twin",
+  modes: "corridor",
+  intuition: "integration",
+  role: "judgment",
+};
+
 const SECTIONS_INIT = [
   { id:"opening", tab:"פתיחה", headline:"הכלי השתנה. התהליך השתנה.\nהמוצר השתנה. ואתם?", body:"הטכנולוגיה משתפרת מעצמה — תרתי משמע. המודלים מתעדכנים, הכלים מתחדדים. אבל האדם לא משתפר אוטומטית. שינוי תפיסה דורש אימון, כוונה, ואומץ לחשוב אדריכלות בצורה אחרת.", accent:"פחות טכני, יותר רעיוני. השראה ומחקר מצד אחד — ניהול, בדיקה ובקרה מהצד השני." },
   { id:"layers", tab:"שלוש שכבות", headline:"להשתמש בכלי. לייצר כלי.\nלחבר כלים למערכת.", body:"שלב ראשון — שימוש. לשאול שאלה, לקבל תשובה. רוב האנשים נמצאים פה.\n\nשלב שני — ייצור. לאמן, לאפיין, לשייף. כשאת מייצרת כלי, את חייבת לפרק את הידע שלך ליחידות, לנסח, לאמן. זו חשיבה אדריכלית.\n\nשלב שלישי — אינטגרציה. הכלי מפסיק להיות אובייקט בודד ומתחיל להיות חלק מרשת. טריגר נכנס, מפעיל תהליך, יוצר תוצר. זו תכנון עירוני.", accent:"הרצון להמשיך לשייף את הכלים — זו הבנה עמוקה של הצורך. שיוף נובע מכאב או מאמץ. כל איטרציה חושפת שכבה של מה שבאמת חסר." },
@@ -747,9 +757,17 @@ export default function AIforArchitects() {
               </nav>
 
               {/* Main */}
-              <main ref={mainRef} style={{ flex:1, overflow:"auto", padding:"44px 52px 80px", maxWidth:700 }}>
+              <main ref={mainRef} style={{ flex:1, overflow:"auto", padding:"44px 52px 80px", maxWidth:700, position:"relative" }}>
+                {promptImages[SECTION_PROMPT_MAP[sec.id]] && (
+                  <div style={{
+                    position:"absolute", inset:0, zIndex:0, pointerEvents:"none",
+                    backgroundImage:`url(${promptImages[SECTION_PROMPT_MAP[sec.id]]})`,
+                    backgroundSize:"cover", backgroundPosition:"center", backgroundRepeat:"no-repeat",
+                    opacity:0.2,
+                  }} />
+                )}
                 {/* Progress */}
-                <div style={{ display:"flex", gap:5, marginBottom:44 }}>
+                <div style={{ display:"flex", gap:5, marginBottom:44, position:"relative", zIndex:1 }}>
                   {sections.map((_,i) => (
                     <div key={i} onClick={()=>setTab(i)} style={{
                       flex:1, height:2, borderRadius:1, cursor:"pointer", transition:"all 0.5s",
@@ -759,7 +777,7 @@ export default function AIforArchitects() {
                   ))}
                 </div>
 
-                <div key={sec.id} className="afa-slide-in">
+                <div key={sec.id} className="afa-slide-in" style={{ position:"relative", zIndex:1 }}>
                   {isEdit ? (
                     <textarea className="afa-edit-area" value={sec.headline} onChange={e=>upd(tab,"headline",e.target.value)}
                       style={{ fontSize:22, fontWeight:400, color:"rgba(220,180,100,0.9)", lineHeight:1.6, minHeight:90, letterSpacing:0.5 }}/>
