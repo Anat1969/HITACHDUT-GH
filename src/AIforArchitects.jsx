@@ -836,17 +836,9 @@ export default function AIforArchitects() {
               </nav>
 
               {/* Main */}
-              <main ref={mainRef} style={{ flex:1, overflow:"auto", padding:"44px 52px 80px", maxWidth:700, position:"relative" }}>
-                {promptImages[SECTION_PROMPT_MAP[sec.id]] && (
-                  <div style={{
-                    position:"absolute", inset:0, zIndex:0, pointerEvents:"none",
-                    backgroundImage:`url(${promptImages[SECTION_PROMPT_MAP[sec.id]]})`,
-                    backgroundSize:"cover", backgroundPosition:"center", backgroundRepeat:"no-repeat",
-                    opacity:0.2,
-                  }} />
-                )}
+              <main ref={mainRef} style={{ flex:1, overflow:"auto", padding:"44px 52px 80px", maxWidth:700 }}>
                 {/* Progress */}
-                <div style={{ display:"flex", gap:5, marginBottom:44, position:"relative", zIndex:1 }}>
+                <div style={{ display:"flex", gap:5, marginBottom:44 }}>
                   {sections.map((_,i) => (
                     <div key={i} onClick={()=>setTab(i)} style={{
                       flex:1, height:2, borderRadius:1, cursor:"pointer", transition:"all 0.5s",
@@ -856,7 +848,7 @@ export default function AIforArchitects() {
                   ))}
                 </div>
 
-                <div key={sec.id} className="afa-slide-in" style={{ position:"relative", zIndex:1 }}>
+                <div key={sec.id} className="afa-slide-in">
                   {isEdit ? (
                     <textarea className="afa-edit-area" value={sec.headline} onChange={e=>upd(tab,"headline",e.target.value)}
                       style={{ fontSize:22, fontWeight:400, color:"rgba(220,180,100,0.9)", lineHeight:1.6, minHeight:90, letterSpacing:0.5 }}/>
