@@ -68,8 +68,9 @@ const CSS = `
   .afa-pulse-glow { animation: afaPulseGlow 3s ease-in-out infinite; }
   @keyframes afaPulseGlow { 0%,100% { box-shadow:0 0 20px rgba(200,140,50,0.04); } 50% { box-shadow:0 0 30px rgba(200,140,50,0.1); } }
 
-  .afa-link-pill { display:inline-flex; align-items:center; gap:6px; padding:6px 16px; border-radius:20px; font-size:11px; font-weight:300; letter-spacing:0.8px; text-decoration:none; transition:all 0.3s; border:1px solid rgba(200,150,60,0.08); color:rgba(220,180,100,0.5); background:rgba(12,16,20,0.5); backdrop-filter:blur(10px); }
+  .afa-link-pill { display:inline-flex; align-items:center; gap:6px; padding:6px 16px; border-radius:20px; font-size:11px; font-weight:300; letter-spacing:0.8px; text-decoration:none; transition:all 0.3s; border:1px solid rgba(200,150,60,0.08); color:rgba(220,180,100,0.5); background:rgba(12,16,20,0.5); backdrop-filter:blur(10px); cursor:pointer; }
   .afa-link-pill:hover { border-color:rgba(200,150,60,0.25); color:rgba(220,180,100,0.85); background:rgba(180,120,40,0.08); }
+  .afa-link-pill.active { border-color:rgba(200,150,60,0.3); color:rgba(220,180,100,0.9); background:rgba(180,120,40,0.15); box-shadow:0 0 12px rgba(180,120,40,0.08); }
 
   .afa-nav-btn { display:block; width:100%; padding:12px 22px; font-size:13px; text-align:right; background:transparent; border:none; cursor:pointer; font-family:inherit; transition:all 0.3s; letter-spacing:0.3px; position:relative; }
   .afa-nav-btn::before { content:''; position:absolute; right:0; top:20%; bottom:20%; width:2px; background:transparent; transition:all 0.3s; border-radius:1px; }
@@ -681,6 +682,7 @@ export default function AIforArchitects() {
   const [view, setView] = useState("content");
   const [links, setLinks] = useState(() => LS.get("afa-links", LINKS_INIT));
   const [showLinks, setShowLinks] = useState(false);
+  const [embedUrl, setEmbedUrl] = useState(null);
   const [showCinema, setShowCinema] = useState(false);
   const [showWhiteboard, setShowWhiteboard] = useState(false);
   const [promptImages, setPromptImages] = useState({});
@@ -785,7 +787,7 @@ export default function AIforArchitects() {
           <div style={{ display:"flex", gap:6, alignItems:"center" }}>
             <button onClick={()=>setShowWhiteboard(true)} className="afa-mode-pill off" style={{ fontSize:10 }}>לוח ציור</button>
             <button onClick={()=>setShowCinema(true)} className="afa-mode-pill off" style={{ fontSize:10 }}>מצגת</button>
-            <button onClick={()=>setShowLinks(!showLinks)} className={`afa-mode-pill ${showLinks?"on":"off"}`}>קישורים</button>
+            <button onClick={()=>{setShowLinks(!showLinks); if(showLinks) setEmbedUrl(null);}} className={`afa-mode-pill ${showLinks?"on":"off"}`}>קישורים</button>
             <button onClick={()=>setView(view==="prompts"?"content":"prompts")} className={`afa-mode-pill ${view==="prompts"?"on":"off"}`}>
               {view==="prompts"?"תוכן":"פרומפטים"}
             </button>
@@ -809,8 +811,7 @@ export default function AIforArchitects() {
                 </div>
               ) : (
                 <div key={i} style={{ display:"inline-flex", alignItems:"center", gap:2 }}>
-                  <a href={l.url} target="_blank" rel="noreferrer" className="afa-link-pill" title={l.desc}>{l.label}</a>
-                  {isEdit && <button onClick={() => removeLink(i)} style={{ background:"none", border:"none", color:"rgba(212,123,123,0.4)", cursor:"pointer", fontSize:12 }}>&times;</button>}
+                  <button onClick={() => setEmbedUrl(embedUrl === l.url ? null : l.url)} className={`afa-link-pill ${embedUrl === l.url ? "active" : ""}`} title={l.desc}>{l.label}</button>
                 </div>
               )
             ))}
@@ -830,7 +831,16 @@ export default function AIforArchitects() {
 
         {/* Body */}
         <div style={{ flex:1, display:"flex", overflow:"hidden", position:"relative", zIndex:1 }}>
-          {view === "prompts" ? (
+          {showLinks && embedUrl ? (
+            <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
+              <div style={{ flex:1, position:"relative", background:"#000", borderRadius:"0 0 0 0" }}>
+                <div className="afa-cinema-curtain-l" />
+                <div className="afa-cinema-curtain-r" />
+                <div className="afa-cinema-vignette" />
+                <iframe src={embedUrl} style={{ width:"100%", height:"100%", border:"none" }} allowFullScreen allow="autoplay" title="embedded-link" />
+              </div>
+            </div>
+          ) : view === "prompts" ? (
             <div ref={mainRef} style={{ flex:1, overflow:"auto", padding:"40px 48px", maxWidth:760, margin:"0 auto" }}>
               <div style={{ fontSize:17, fontWeight:400, color:"rgba(220,180,100,0.85)", marginBottom:4, letterSpacing:1 }}>פרומפטים להמחשה</div>
               <div style={{ fontSize:11, color:"rgba(200,160,80,0.25)", marginBottom:36, fontWeight:300 }}>Midjourney — העתיקי והדביקי. הדביקי תמונה ליד כל פרומפט.</div>
