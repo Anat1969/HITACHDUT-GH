@@ -1,6 +1,12 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
+/* ─── STORAGE HELPERS ─── */
+const LS = {
+  get: (k, def) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch { return def; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* quota */ } },
+};
+
 /* ─── DATA ─── */
 const LINKS_INIT = [
   { label: "Claude Chat", url: "https://claude.ai", desc: "שיחה וחקירה" },
@@ -67,6 +73,46 @@ const CSS = `
 
   textarea.afa-edit-area { width:100%; font-family:inherit; direction:rtl; resize:vertical; background:rgba(12,16,20,0.5); backdrop-filter:blur(12px); border:1px solid rgba(200,140,50,0.1); border-radius:12px; padding:18px 20px; color:rgba(220,200,170,0.85); font-weight:300; line-height:1.9; outline:none; transition:border-color 0.3s; }
   textarea.afa-edit-area:focus { border-color:rgba(200,140,50,0.25); }
+
+  /* ─── Drop Zone ─── */
+  .afa-dropzone { position:relative; border:2px dashed rgba(200,150,60,0.12); border-radius:12px; padding:16px; text-align:center; cursor:pointer; transition:all 0.3s; min-height:80px; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px; }
+  .afa-dropzone:hover, .afa-dropzone.drag-over { border-color:rgba(200,150,60,0.4); background:rgba(180,120,40,0.06); }
+  .afa-dropzone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; }
+  .afa-dropzone-label { font-size:11px; color:rgba(200,160,80,0.35); font-weight:300; pointer-events:none; }
+
+  /* ─── Prompt Image ─── */
+  .afa-prompt-img { border-radius:10px; border:1px solid rgba(200,150,60,0.08); margin-top:14px; overflow:hidden; position:relative; background:rgba(0,0,0,0.2); }
+  .afa-prompt-img img { display:block; width:100%; height:auto; image-rendering:auto; }
+  .afa-prompt-img .afa-img-remove { position:absolute; top:8px; left:8px; width:28px; height:28px; border-radius:50%; background:rgba(0,0,0,0.7); border:1px solid rgba(200,150,60,0.2); color:rgba(220,180,100,0.7); font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.3s; }
+  .afa-prompt-img:hover .afa-img-remove { opacity:1; }
+
+  /* ─── Cinema Modal ─── */
+  .afa-overlay { position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); display:flex; align-items:center; justify-content:center; animation:afaFadeIn 0.3s ease; }
+  @keyframes afaFadeIn { from { opacity:0; } to { opacity:1; } }
+  .afa-cinema { width:90vw; max-width:1200px; height:80vh; display:flex; flex-direction:column; border-radius:20px; overflow:hidden; border:2px solid rgba(200,150,60,0.15); box-shadow:0 0 80px rgba(0,0,0,0.7), 0 0 30px rgba(180,120,40,0.08); background:#0a0d10; }
+  .afa-cinema-bar { display:flex; align-items:center; gap:10px; padding:12px 20px; background:rgba(8,11,14,0.9); border-bottom:1px solid rgba(200,150,60,0.08); flex-shrink:0; }
+  .afa-cinema-bar input { flex:1; padding:8px 14px; border-radius:20px; border:1px solid rgba(200,140,50,0.1); background:rgba(12,16,20,0.6); color:rgba(220,200,170,0.8); font-size:12px; font-family:inherit; direction:ltr; outline:none; }
+  .afa-cinema-bar input:focus { border-color:rgba(200,140,50,0.3); }
+  .afa-cinema-body { flex:1; background:#000; position:relative; }
+  .afa-cinema-body iframe { width:100%; height:100%; border:none; }
+  .afa-cinema-curtain-l, .afa-cinema-curtain-r { position:absolute; top:0; bottom:0; width:24px; z-index:2; pointer-events:none; }
+  .afa-cinema-curtain-l { left:0; background:linear-gradient(90deg, rgba(10,8,6,0.6), transparent); }
+  .afa-cinema-curtain-r { right:0; background:linear-gradient(-90deg, rgba(10,8,6,0.6), transparent); }
+  .afa-cinema-vignette { position:absolute; inset:0; pointer-events:none; z-index:1; box-shadow:inset 0 0 100px rgba(0,0,0,0.5); border-radius:0 0 18px 18px; }
+
+  /* ─── Whiteboard ─── */
+  .afa-wb-toolbar { display:flex; align-items:center; gap:8px; padding:10px 20px; background:rgba(8,11,14,0.95); border-bottom:1px solid rgba(200,150,60,0.08); flex-shrink:0; flex-wrap:wrap; }
+  .afa-wb-color { width:28px; height:28px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:all 0.2s; box-shadow:0 2px 6px rgba(0,0,0,0.4); }
+  .afa-wb-color:hover { transform:scale(1.15); }
+  .afa-wb-color.active { border-color:#fff; box-shadow:0 0 12px rgba(255,255,255,0.2); transform:scale(1.15); }
+  .afa-wb-size { display:flex; align-items:center; gap:6px; margin:0 8px; }
+  .afa-wb-size input[type=range] { width:80px; accent-color:rgba(200,140,50,0.6); }
+  .afa-wb-size span { font-size:10px; color:rgba(200,160,80,0.4); min-width:20px; text-align:center; }
+
+  /* ─── Add Link Input ─── */
+  .afa-add-link { display:flex; gap:6px; align-items:center; margin-top:8px; }
+  .afa-add-link input { padding:5px 10px; border-radius:16px; border:1px solid rgba(200,140,50,0.1); background:rgba(12,16,20,0.5); color:rgba(220,200,170,0.7); font-size:11px; font-family:inherit; outline:none; }
+  .afa-add-link input:focus { border-color:rgba(200,140,50,0.3); }
 `;
 
 /* ─── COMPONENTS ─── */
@@ -80,6 +126,238 @@ const CopyBtn = ({ text }) => {
   );
 };
 
+/* ─── Prompt Image Upload ─── */
+const PromptImage = ({ promptId, images, setImages }) => {
+  const [dragOver, setDragOver] = useState(false);
+  const fileRef = useRef(null);
+
+  const handleFile = (file) => {
+    if (!file || !file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const updated = { ...images, [promptId]: e.target.result };
+      setImages(updated);
+      LS.set("afa-prompt-images", updated);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDrop = (e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); };
+  const handlePaste = useCallback((e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith("image/")) { e.preventDefault(); handleFile(item.getAsFile()); return; }
+    }
+  }, [promptId, images]);
+
+  useEffect(() => {
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+  }, [handlePaste]);
+
+  const removeImage = () => {
+    const updated = { ...images };
+    delete updated[promptId];
+    setImages(updated);
+    LS.set("afa-prompt-images", updated);
+  };
+
+  const img = images[promptId];
+
+  if (img) {
+    return (
+      <div className="afa-prompt-img">
+        <img src={img} alt={promptId} />
+        <button className="afa-img-remove" onClick={removeImage}>&times;</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`afa-dropzone ${dragOver ? "drag-over" : ""}`}
+      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={handleDrop}
+      onClick={() => fileRef.current?.click()}>
+      <input ref={fileRef} type="file" accept="image/*" onChange={(e) => handleFile(e.target.files[0])} />
+      <div className="afa-dropzone-label">גררי תמונה לכאן, הדביקי (Ctrl+V), או לחצי לבחור</div>
+      <div className="afa-dropzone-label" style={{ fontSize:9, color:"rgba(200,160,80,0.2)" }}>1:1 — תוצג בגודל מלא</div>
+    </div>
+  );
+};
+
+/* ─── Presentation Cinema Viewer ─── */
+const CinemaViewer = ({ show, onClose }) => {
+  const [url, setUrl] = useState(() => LS.get("afa-presentation-url", ""));
+  const [liveUrl, setLiveUrl] = useState(() => LS.get("afa-presentation-url", ""));
+
+  const load = () => {
+    let u = url.trim();
+    if (u && !u.startsWith("http")) u = "https://" + u;
+    if (u.includes("docs.google.com/presentation") && !u.includes("/embed")) {
+      u = u.replace(/\/edit.*$/, "/embed?start=false&loop=false&delayms=3000");
+      u = u.replace(/\/pub.*$/, "/embed?start=false&loop=false&delayms=3000");
+    }
+    setLiveUrl(u);
+    LS.set("afa-presentation-url", url.trim());
+  };
+
+  if (!show) return null;
+  return (
+    <div className="afa-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="afa-cinema afa-slide-in">
+        <div className="afa-cinema-bar">
+          <button className="afa-mode-pill off" onClick={onClose} style={{ fontSize:10, padding:"5px 14px" }}>&times; סגור</button>
+          <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="הדביקי קישור למצגת (Google Slides, Canva...)" onKeyDown={(e) => { if (e.key === "Enter") load(); }} />
+          <button className="afa-mode-pill off" onClick={load} style={{ fontSize:10, padding:"5px 14px" }}>טען</button>
+        </div>
+        <div className="afa-cinema-body">
+          <div className="afa-cinema-curtain-l" />
+          <div className="afa-cinema-curtain-r" />
+          <div className="afa-cinema-vignette" />
+          {liveUrl ? (
+            <iframe src={liveUrl} allowFullScreen allow="autoplay" title="presentation" />
+          ) : (
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100%", color:"rgba(200,160,80,0.2)", fontSize:14, fontWeight:300 }}>
+              הדביקי קישור למצגת למעלה ולחצי ״טען״
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ─── Whiteboard ─── */
+const Whiteboard = ({ show, onClose }) => {
+  const canvasRef = useRef(null);
+  const [drawing, setDrawing] = useState(false);
+  const [color, setColor] = useState("#e8c84a");
+  const [size, setSize] = useState(4);
+  const [eraser, setEraser] = useState(false);
+  const lastPos = useRef(null);
+
+  const COLORS = ["#e8c84a","#ffffff","#d47b7b","#5b8fd4","#5dba7d","#d4a55b","#a78bdb","#ff6b6b","#4ecdc4","#ffe66d"];
+
+  useEffect(() => {
+    if (!show || !canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const saved = LS.get("afa-whiteboard", null);
+    if (saved) {
+      const img = new Image();
+      img.onload = () => {
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+      };
+      img.src = saved;
+    }
+  }, [show]);
+
+  const resize = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const parent = canvas.parentElement;
+    const temp = document.createElement("canvas");
+    temp.width = canvas.width;
+    temp.height = canvas.height;
+    temp.getContext("2d").drawImage(canvas, 0, 0);
+    canvas.width = parent.clientWidth;
+    canvas.height = parent.clientHeight;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#111318";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(temp, 0, 0);
+  }, []);
+
+  useEffect(() => {
+    if (!show) return;
+    const t = setTimeout(resize, 50);
+    window.addEventListener("resize", resize);
+    return () => { clearTimeout(t); window.removeEventListener("resize", resize); };
+  }, [show, resize]);
+
+  const getPos = (e) => {
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: clientX - rect.left, y: clientY - rect.top };
+  };
+
+  const startDraw = (e) => {
+    e.preventDefault();
+    setDrawing(true);
+    lastPos.current = getPos(e);
+  };
+
+  const draw = (e) => {
+    if (!drawing) return;
+    e.preventDefault();
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    const pos = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(lastPos.current.x, lastPos.current.y);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.strokeStyle = eraser ? "#111318" : color;
+    ctx.lineWidth = eraser ? size * 4 : size;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.stroke();
+    lastPos.current = pos;
+  };
+
+  const endDraw = () => {
+    setDrawing(false);
+    lastPos.current = null;
+    const canvas = canvasRef.current;
+    if (canvas) LS.set("afa-whiteboard", canvas.toDataURL());
+  };
+
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#111318";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    LS.set("afa-whiteboard", canvas.toDataURL());
+  };
+
+  if (!show) return null;
+  return (
+    <div className="afa-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="afa-cinema afa-slide-in" style={{ height:"88vh", maxWidth:"95vw", width:"95vw" }}>
+        <div className="afa-wb-toolbar">
+          <button className="afa-mode-pill off" onClick={onClose} style={{ fontSize:10, padding:"5px 14px" }}>&times; סגור</button>
+          <div style={{ width:1, height:24, background:"rgba(200,150,60,0.1)", margin:"0 4px" }} />
+          {COLORS.map(c => (
+            <div key={c} className={`afa-wb-color ${!eraser && color === c ? "active" : ""}`}
+              style={{ background:c }}
+              onClick={() => { setColor(c); setEraser(false); }} />
+          ))}
+          <div style={{ width:1, height:24, background:"rgba(200,150,60,0.1)", margin:"0 4px" }} />
+          <button className={`afa-mode-pill ${eraser ? "on" : "off"}`} onClick={() => setEraser(!eraser)} style={{ fontSize:10, padding:"5px 14px" }}>
+            {eraser ? "מוחק פעיל" : "מחק"}
+          </button>
+          <div className="afa-wb-size">
+            <span>{size}</span>
+            <input type="range" min="1" max="30" value={size} onChange={(e) => setSize(+e.target.value)} />
+          </div>
+          <button className="afa-mode-pill off" onClick={clearCanvas} style={{ fontSize:10, padding:"5px 14px", color:"rgba(212,123,123,0.7)" }}>נקה הכל</button>
+        </div>
+        <div style={{ flex:1, position:"relative", overflow:"hidden", background:"#111318" }}>
+          <canvas ref={canvasRef}
+            style={{ display:"block", cursor: eraser ? "cell" : "crosshair", touchAction:"none" }}
+            onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw}
+            onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* Flip Cards for Digital Twin section */
 const FlipCards = () => {
   const [flipped, setFlipped] = useState({});
   const cards = [
@@ -110,6 +388,7 @@ const FlipCards = () => {
   );
 };
 
+/* Spectrum Slider */
 const SpectrumSlider = () => {
   const [pos, setPos] = useState(50);
   const tool = ["רינדור","ניתוח תקציב","טבלאות","בדיקת תקנים"];
@@ -138,6 +417,7 @@ const SpectrumSlider = () => {
   );
 };
 
+/* Layers Diagram */
 const LayersDiagram = () => {
   const [a, setA] = useState(null);
   const L = [
@@ -172,6 +452,7 @@ const LayersDiagram = () => {
   );
 };
 
+/* Mode Circles */
 const ModeCircles = () => {
   const [m, setM] = useState(null);
   const M = [
@@ -207,6 +488,7 @@ const ModeCircles = () => {
   );
 };
 
+/* Intuition Provocation */
 const IntuitionWidget = () => {
   const [revealed, setRevealed] = useState(false);
   return (
@@ -236,6 +518,7 @@ const IntuitionWidget = () => {
   );
 };
 
+/* Role Summary Cards */
 const RoleCards = () => {
   const roles = [
     { title:"לשאול", desc:"את השאלה הנכונה. AI לא יודע מה הוא לא יודע." },
@@ -264,9 +547,17 @@ export default function AIforArchitects() {
   const [tab, setTab] = useState(0);
   const [sections, setSections] = useState(SECTIONS_INIT);
   const [view, setView] = useState("content");
-  const [links, setLinks] = useState(LINKS_INIT);
+  const [links, setLinks] = useState(() => LS.get("afa-links", LINKS_INIT));
   const [showLinks, setShowLinks] = useState(false);
+  const [showCinema, setShowCinema] = useState(false);
+  const [showWhiteboard, setShowWhiteboard] = useState(false);
+  const [promptImages, setPromptImages] = useState(() => LS.get("afa-prompt-images", {}));
+  const [addingLink, setAddingLink] = useState(false);
+  const [newLinkLabel, setNewLinkLabel] = useState("");
+  const [newLinkUrl, setNewLinkUrl] = useState("");
   const mainRef = useRef(null);
+
+  useEffect(() => { LS.set("afa-links", links); }, [links]);
 
   const upd = useCallback((i, f, v) => {
     setSections(p => p.map((s, idx) => idx===i ? {...s, [f]:v} : s));
@@ -274,17 +565,30 @@ export default function AIforArchitects() {
 
   useEffect(() => {
     const h = e => {
-      if (view !== "content") return;
+      if (view !== "content" || showCinema || showWhiteboard) return;
       if (e.key === "ArrowLeft" && tab < sections.length-1) { setTab(t=>t+1); }
       if (e.key === "ArrowRight" && tab > 0) { setTab(t=>t-1); }
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }, [tab, view, sections.length]);
+  }, [tab, view, sections.length, showCinema, showWhiteboard]);
 
   useEffect(() => {
     if (mainRef.current) mainRef.current.scrollTo({ top: 0, behavior: "smooth" });
   }, [tab]);
+
+  const addLink = () => {
+    if (newLinkLabel.trim() && newLinkUrl.trim()) {
+      setLinks([...links, { label: newLinkLabel.trim(), url: newLinkUrl.trim(), desc: "" }]);
+      setNewLinkLabel("");
+      setNewLinkUrl("");
+      setAddingLink(false);
+    }
+  };
+
+  const removeLink = (i) => {
+    setLinks(links.filter((_, idx) => idx !== i));
+  };
 
   const sec = sections[tab];
   const interactive = {
@@ -325,6 +629,8 @@ export default function AIforArchitects() {
             </div>
           </div>
           <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+            <button onClick={()=>setShowWhiteboard(true)} className="afa-mode-pill off" style={{ fontSize:10 }}>לוח ציור</button>
+            <button onClick={()=>setShowCinema(true)} className="afa-mode-pill off" style={{ fontSize:10 }}>מצגת</button>
             <button onClick={()=>setShowLinks(!showLinks)} className={`afa-mode-pill ${showLinks?"on":"off"}`}>קישורים</button>
             <button onClick={()=>setView(view==="prompts"?"content":"prompts")} className={`afa-mode-pill ${view==="prompts"?"on":"off"}`}>
               {view==="prompts"?"תוכן":"פרומפטים"}
@@ -345,14 +651,25 @@ export default function AIforArchitects() {
                     style={{ width:80, padding:"4px 8px", fontSize:11, background:"rgba(12,16,20,0.5)", border:"1px solid rgba(200,140,50,0.1)", borderRadius:8, color:"rgba(220,200,170,0.7)", fontFamily:"inherit" }}/>
                   <input value={l.url} onChange={e=>{const n=[...links]; n[i]={...n[i], url:e.target.value}; setLinks(n);}}
                     style={{ width:160, padding:"4px 8px", fontSize:10, background:"rgba(12,16,20,0.5)", border:"1px solid rgba(200,140,50,0.1)", borderRadius:8, color:"rgba(220,200,170,0.5)", fontFamily:"monospace", direction:"ltr" }}/>
+                  <button onClick={() => removeLink(i)} style={{ background:"none", border:"none", color:"rgba(212,123,123,0.5)", cursor:"pointer", fontSize:14 }}>&times;</button>
                 </div>
               ) : (
-                <a key={i} href={l.url} target="_blank" rel="noreferrer" className="afa-link-pill" title={l.desc}>{l.label}</a>
+                <div key={i} style={{ display:"inline-flex", alignItems:"center", gap:2 }}>
+                  <a href={l.url} target="_blank" rel="noreferrer" className="afa-link-pill" title={l.desc}>{l.label}</a>
+                  {isEdit && <button onClick={() => removeLink(i)} style={{ background:"none", border:"none", color:"rgba(212,123,123,0.4)", cursor:"pointer", fontSize:12 }}>&times;</button>}
+                </div>
               )
             ))}
-            {isEdit && (
-              <button onClick={()=>setLinks([...links, {label:"חדש", url:"https://", desc:""}])}
-                className="afa-mode-pill off" style={{ fontSize:10, padding:"4px 12px" }}>+</button>
+            {addingLink ? (
+              <div className="afa-add-link afa-slide-in">
+                <input value={newLinkLabel} onChange={e => setNewLinkLabel(e.target.value)} placeholder="שם" style={{ width:80 }} />
+                <input value={newLinkUrl} onChange={e => setNewLinkUrl(e.target.value)} placeholder="https://..." style={{ width:180, direction:"ltr" }}
+                  onKeyDown={e => { if (e.key === "Enter") addLink(); }} />
+                <button className="afa-mode-pill off" onClick={addLink} style={{ fontSize:10, padding:"4px 12px" }}>+</button>
+                <button className="afa-mode-pill off" onClick={() => setAddingLink(false)} style={{ fontSize:10, padding:"4px 12px" }}>&times;</button>
+              </div>
+            ) : (
+              <button onClick={() => setAddingLink(true)} className="afa-mode-pill off" style={{ fontSize:10, padding:"4px 12px" }}>+ קישור</button>
             )}
           </div>
         )}
@@ -362,13 +679,16 @@ export default function AIforArchitects() {
           {view === "prompts" ? (
             <div ref={mainRef} style={{ flex:1, overflow:"auto", padding:"40px 48px", maxWidth:760, margin:"0 auto" }}>
               <div style={{ fontSize:17, fontWeight:400, color:"rgba(220,180,100,0.85)", marginBottom:4, letterSpacing:1 }}>פרומפטים להמחשה</div>
-              <div style={{ fontSize:11, color:"rgba(200,160,80,0.25)", marginBottom:36, fontWeight:300 }}>Midjourney — העתיקי והדביקי</div>
+              <div style={{ fontSize:11, color:"rgba(200,160,80,0.25)", marginBottom:36, fontWeight:300 }}>Midjourney — העתיקי והדביקי. הדביקי תמונה ליד כל פרומפט.</div>
               {PROMPTS.map((p,i) => (
                 <div key={p.id} className="afa-glass afa-slide-in" style={{ marginBottom:16, padding:28, borderRadius:16, animationDelay:`${i*80}ms`, boxShadow:"0 4px 30px rgba(0,0,0,0.25)" }}>
                   <div style={{ fontSize:14, fontWeight:400, color:"rgba(220,180,100,0.8)", marginBottom:6 }}>{p.title}</div>
                   <div style={{ fontSize:12, color:"rgba(220,200,170,0.45)", marginBottom:18, lineHeight:1.7, fontWeight:300 }}>{p.hook}</div>
                   <div style={{ fontSize:10.5, color:"rgba(220,200,170,0.3)", background:"rgba(0,0,0,0.25)", padding:"14px 16px", borderRadius:10, lineHeight:1.9, direction:"ltr", textAlign:"left", fontFamily:"'SF Mono','Fira Code',monospace", border:"1px solid rgba(200,150,60,0.03)", marginBottom:14, fontWeight:300 }}>{p.prompt}</div>
-                  <CopyBtn text={p.prompt}/>
+                  <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:14 }}>
+                    <CopyBtn text={p.prompt}/>
+                  </div>
+                  <PromptImage promptId={p.id} images={promptImages} setImages={setPromptImages} />
                 </div>
               ))}
             </div>
@@ -435,6 +755,10 @@ export default function AIforArchitects() {
           )}
         </div>
       </div>
+
+      {/* Modals */}
+      <CinemaViewer show={showCinema} onClose={() => setShowCinema(false)} />
+      <Whiteboard show={showWhiteboard} onClose={() => setShowWhiteboard(false)} />
     </>
   );
 }
