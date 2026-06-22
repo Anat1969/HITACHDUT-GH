@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 
 /* ═══════════════════════════════════════════════════════════════════
    DATA SCHEMA — מוכן ל-Supabase
@@ -341,6 +342,7 @@ body{font-family:var(--font);background:var(--bg0);color:var(--t1);direction:rtl
    APP
    ═══════════════════════════════════════════════════════════════════ */
 export default function App() {
+  const navigate = useNavigate();
   const [data, setData] = useState(() => { try { const s = localStorage.getItem(KEY); return s ? JSON.parse(s) : SEED; } catch { return SEED; } });
   const [page, setPage] = useState("dashboard");
   const [si, setSi] = useState(0);
@@ -392,7 +394,9 @@ export default function App() {
 
       {/* SIDEBAR */}
       <div className="sb">
-        <div className="sb-head"><h1>מרכז למידה</h1><p>AI, אפליקציות, אוטומציות</p></div>
+        <div className="sb-head"><h1>מרכז למידה</h1><p>AI, אפליקציות, אוטומציות</p>
+          <button className="pill sm" style={{ marginTop:8, width:"100%" }} onClick={() => navigate("/hitachdut2")}>AI לאדריכלים &larr;</button>
+        </div>
         <div className="sb-nav">{Object.entries(PAGES).map(([k, v]) => (<button key={k} className={`pnav ${page === k ? "on" : ""}`} onClick={() => { setPage(k); setEditTool(null); setEditTask(null); }}>{v}</button>))}</div>
 
         {page === "sessions" && (<>
