@@ -885,9 +885,6 @@ export default function AIforArchitects() {
                   </div>
                 </div>
               </main>
-
-              {/* Side Image Panel */}
-              <SectionSideImage sectionId={sec.id} promptImages={promptImages} setPromptImages={setPromptImages} />
             </>
           )}
         </div>
