@@ -94,8 +94,17 @@ const CSS = `
   /* ─── Prompt Image ─── */
   .afa-prompt-img { border-radius:10px; border:1px solid rgba(200,150,60,0.08); margin-top:14px; overflow:hidden; position:relative; background:rgba(0,0,0,0.2); }
   .afa-prompt-img img { display:block; width:100%; height:auto; image-rendering:auto; }
-  .afa-prompt-img .afa-img-remove { position:absolute; top:8px; left:8px; width:28px; height:28px; border-radius:50%; background:rgba(0,0,0,0.7); border:1px solid rgba(200,150,60,0.2); color:rgba(220,180,100,0.7); font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.3s; }
-  .afa-prompt-img:hover .afa-img-remove { opacity:1; }
+  .afa-prompt-img .afa-img-actions { display:flex; gap:6px; justify-content:center; padding:6px 0; background:rgba(0,0,0,0.3); opacity:0; transition:opacity 0.4s; }
+  .afa-prompt-img:hover .afa-img-actions { opacity:1; }
+  .afa-prompt-img .afa-img-action-btn { background:none; border:none; color:rgba(200,160,80,0.35); font-size:10px; font-family:inherit; cursor:pointer; padding:2px 8px; transition:color 0.3s; }
+  .afa-prompt-img .afa-img-action-btn:hover { color:rgba(220,180,100,0.7); }
+
+  /* ─── Section Side Image ─── */
+  .afa-side-image { position:relative; overflow:hidden; }
+  .afa-side-image .afa-side-img-actions { position:absolute; bottom:12px; left:50%; transform:translateX(-50%); display:flex; gap:6px; opacity:0; transition:opacity 0.4s; z-index:2; }
+  .afa-side-image:hover .afa-side-img-actions { opacity:1; }
+  .afa-side-img-btn { background:rgba(0,0,0,0.6); backdrop-filter:blur(8px); border:1px solid rgba(200,150,60,0.1); color:rgba(200,160,80,0.4); font-size:10px; font-family:inherit; cursor:pointer; padding:4px 12px; border-radius:14px; transition:all 0.3s; }
+  .afa-side-img-btn:hover { color:rgba(220,180,100,0.7); border-color:rgba(200,150,60,0.25); }
 
   /* ─── Cinema Modal ─── */
   .afa-overlay { position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); display:flex; align-items:center; justify-content:center; animation:afaFadeIn 0.3s ease; }
@@ -191,7 +200,11 @@ const PromptImage = ({ promptId, images, setImages }) => {
     return (
       <div className="afa-prompt-img">
         <img src={img} alt={promptId} />
-        <button className="afa-img-remove" onClick={removeImage}>&times;</button>
+        <div className="afa-img-actions">
+          <button className="afa-img-action-btn" onClick={() => !uploading && fileRef.current?.click()}>החלף</button>
+          <button className="afa-img-action-btn" onClick={removeImage}>הסר</button>
+          <input ref={fileRef} type="file" accept="image/*" style={{ display:"none" }} onChange={(e) => handleFile(e.target.files[0])} />
+        </div>
       </div>
     );
   }
@@ -210,6 +223,72 @@ const PromptImage = ({ promptId, images, setImages }) => {
           <div className="afa-dropzone-label">גררי תמונה לכאן, הדביקי (Ctrl+V), או לחצי לבחור</div>
           <div className="afa-dropzone-label" style={{ fontSize:9, color:"rgba(200,160,80,0.2)" }}>1:1 — נשמרת לצמיתות ונגישה מכל מכשיר</div>
         </>
+      )}
+    </div>
+  );
+};
+
+/* ─── Section Side Image ─── */
+const SectionSideImage = ({ sectionId, promptImages, setPromptImages }) => {
+  const fileRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const promptId = SECTION_PROMPT_MAP[sectionId];
+  const img = promptId && promptImages[promptId];
+
+  const handleFile = async (file) => {
+    if (!file || !file.type.startsWith("image/") || !promptId) return;
+    setUploading(true);
+    try {
+      const publicUrl = await uploadPromptImage(promptId, file);
+      setPromptImages(prev => ({ ...prev, [promptId]: publicUrl }));
+    } catch (err) {
+      console.error("Upload failed:", err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeImage = async () => {
+    if (!promptId) return;
+    try {
+      await deletePromptImage(promptId);
+      setPromptImages(prev => { const n = { ...prev }; delete n[promptId]; return n; });
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
+  };
+
+  return (
+    <div className="afa-side-image" style={{
+      flex:1, minWidth:0, position:"relative", overflow:"hidden",
+      display:"flex", alignItems:"center", justifyContent:"center",
+    }}>
+      {img ? (
+        <>
+          <img src={img} alt="" style={{
+            position:"absolute", inset:0, width:"100%", height:"100%",
+            objectFit:"cover", objectPosition:"center",
+            opacity:0.2, pointerEvents:"none",
+          }} />
+          <div className="afa-side-img-actions">
+            <button className="afa-side-img-btn" onClick={() => fileRef.current?.click()}>
+              {uploading ? "מעלה..." : "החלף"}
+            </button>
+            <button className="afa-side-img-btn" onClick={removeImage}>הסר</button>
+            <input ref={fileRef} type="file" accept="image/*" style={{ display:"none" }}
+              onChange={(e) => handleFile(e.target.files[0])} />
+          </div>
+        </>
+      ) : (
+        <div
+          style={{ cursor:"pointer", textAlign:"center", padding:20 }}
+          onClick={() => fileRef.current?.click()}>
+          <div style={{ fontSize:11, color:"rgba(200,160,80,0.15)", fontWeight:300 }}>
+            {uploading ? "מעלה..." : "לחצי להוסיף תמונת רקע"}
+          </div>
+          <input ref={fileRef} type="file" accept="image/*" style={{ display:"none" }}
+            onChange={(e) => handleFile(e.target.files[0])} />
+        </div>
       )}
     </div>
   );
@@ -757,17 +836,9 @@ export default function AIforArchitects() {
               </nav>
 
               {/* Main */}
-              <main ref={mainRef} style={{ flex:1, overflow:"auto", padding:"44px 52px 80px", maxWidth:700, position:"relative" }}>
-                {promptImages[SECTION_PROMPT_MAP[sec.id]] && (
-                  <div style={{
-                    position:"absolute", inset:0, zIndex:0, pointerEvents:"none",
-                    backgroundImage:`url(${promptImages[SECTION_PROMPT_MAP[sec.id]]})`,
-                    backgroundSize:"cover", backgroundPosition:"center", backgroundRepeat:"no-repeat",
-                    opacity:0.2,
-                  }} />
-                )}
+              <main ref={mainRef} style={{ flex:1, overflow:"auto", padding:"44px 52px 80px", maxWidth:700 }}>
                 {/* Progress */}
-                <div style={{ display:"flex", gap:5, marginBottom:44, position:"relative", zIndex:1 }}>
+                <div style={{ display:"flex", gap:5, marginBottom:44 }}>
                   {sections.map((_,i) => (
                     <div key={i} onClick={()=>setTab(i)} style={{
                       flex:1, height:2, borderRadius:1, cursor:"pointer", transition:"all 0.5s",
@@ -777,7 +848,7 @@ export default function AIforArchitects() {
                   ))}
                 </div>
 
-                <div key={sec.id} className="afa-slide-in" style={{ position:"relative", zIndex:1 }}>
+                <div key={sec.id} className="afa-slide-in">
                   {isEdit ? (
                     <textarea className="afa-edit-area" value={sec.headline} onChange={e=>upd(tab,"headline",e.target.value)}
                       style={{ fontSize:22, fontWeight:400, color:"rgba(220,180,100,0.9)", lineHeight:1.6, minHeight:90, letterSpacing:0.5 }}/>
@@ -814,6 +885,9 @@ export default function AIforArchitects() {
                   </div>
                 </div>
               </main>
+
+              {/* Side Image Panel */}
+              <SectionSideImage sectionId={sec.id} promptImages={promptImages} setPromptImages={setPromptImages} />
             </>
           )}
         </div>
