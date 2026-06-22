@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { uploadPromptImage, deletePromptImage, listPromptImages } from "./supabaseClient";
+import { uploadPromptImage, deletePromptImage, listPromptImages, migrateLocalStorageToSupabase } from "./supabaseClient";
 
 /* ─── STORAGE HELPERS ─── */
 const LS = {
@@ -570,10 +570,28 @@ export default function AIforArchitects() {
   const [showCinema, setShowCinema] = useState(false);
   const [showWhiteboard, setShowWhiteboard] = useState(false);
   const [promptImages, setPromptImages] = useState({});
+  const [imagesLoading, setImagesLoading] = useState(true);
   const [addingLink, setAddingLink] = useState(false);
 
   useEffect(() => {
-    listPromptImages().then(setPromptImages).catch(console.error);
+    async function loadImages() {
+      try {
+        const migrated = await migrateLocalStorageToSupabase();
+        if (Object.keys(migrated).length > 0) {
+          setPromptImages(migrated);
+        } else {
+          const remote = await listPromptImages();
+          setPromptImages(remote);
+        }
+      } catch (err) {
+        console.error("Failed to load images:", err);
+        const fallback = LS.get("afa-prompt-images", {});
+        if (Object.keys(fallback).length > 0) setPromptImages(fallback);
+      } finally {
+        setImagesLoading(false);
+      }
+    }
+    loadImages();
   }, []);
   const [newLinkLabel, setNewLinkLabel] = useState("");
   const [newLinkUrl, setNewLinkUrl] = useState("");
@@ -702,6 +720,11 @@ export default function AIforArchitects() {
             <div ref={mainRef} style={{ flex:1, overflow:"auto", padding:"40px 48px", maxWidth:760, margin:"0 auto" }}>
               <div style={{ fontSize:17, fontWeight:400, color:"rgba(220,180,100,0.85)", marginBottom:4, letterSpacing:1 }}>פרומפטים להמחשה</div>
               <div style={{ fontSize:11, color:"rgba(200,160,80,0.25)", marginBottom:36, fontWeight:300 }}>Midjourney — העתיקי והדביקי. הדביקי תמונה ליד כל פרומפט.</div>
+              {imagesLoading && (
+                <div className="afa-glass" style={{ padding:"14px 20px", borderRadius:12, marginBottom:16, fontSize:12, color:"rgba(220,180,100,0.6)", fontWeight:300, textAlign:"center" }}>
+                  טוען תמונות...
+                </div>
+              )}
               {PROMPTS.map((p,i) => (
                 <div key={p.id} className="afa-glass afa-slide-in" style={{ marginBottom:16, padding:28, borderRadius:16, animationDelay:`${i*80}ms`, boxShadow:"0 4px 30px rgba(0,0,0,0.25)" }}>
                   <div style={{ fontSize:14, fontWeight:400, color:"rgba(220,180,100,0.8)", marginBottom:6 }}>{p.title}</div>
