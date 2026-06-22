@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { uploadPromptImage, deletePromptImage, listPromptImages } from "./supabaseClient";
 
 /* ─── STORAGE HELPERS ─── */
 const LS = {
@@ -126,20 +127,24 @@ const CopyBtn = ({ text }) => {
   );
 };
 
-/* ─── Prompt Image Upload ─── */
+/* ─── Prompt Image Upload (Supabase Storage) ─── */
 const PromptImage = ({ promptId, images, setImages }) => {
   const [dragOver, setDragOver] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const fileRef = useRef(null);
 
-  const handleFile = (file) => {
+  const handleFile = async (file) => {
     if (!file || !file.type.startsWith("image/")) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const updated = { ...images, [promptId]: e.target.result };
-      setImages(updated);
-      LS.set("afa-prompt-images", updated);
-    };
-    reader.readAsDataURL(file);
+    setUploading(true);
+    try {
+      const publicUrl = await uploadPromptImage(promptId, file);
+      setImages(prev => ({ ...prev, [promptId]: publicUrl }));
+    } catch (err) {
+      console.error("Upload failed:", err);
+      alert("העלאה נכשלה: " + (err.message || err));
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleDrop = (e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); };
@@ -147,20 +152,27 @@ const PromptImage = ({ promptId, images, setImages }) => {
     const items = e.clipboardData?.items;
     if (!items) return;
     for (const item of items) {
-      if (item.type.startsWith("image/")) { e.preventDefault(); handleFile(item.getAsFile()); return; }
+      if (item.type.startsWith("image/")) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) handleFile(file);
+        return;
+      }
     }
-  }, [promptId, images]);
+  }, [promptId]);
 
   useEffect(() => {
     document.addEventListener("paste", handlePaste);
     return () => document.removeEventListener("paste", handlePaste);
   }, [handlePaste]);
 
-  const removeImage = () => {
-    const updated = { ...images };
-    delete updated[promptId];
-    setImages(updated);
-    LS.set("afa-prompt-images", updated);
+  const removeImage = async () => {
+    try {
+      await deletePromptImage(promptId);
+      setImages(prev => { const n = { ...prev }; delete n[promptId]; return n; });
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
   };
 
   const img = images[promptId];
@@ -179,10 +191,16 @@ const PromptImage = ({ promptId, images, setImages }) => {
       onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
       onDragLeave={() => setDragOver(false)}
       onDrop={handleDrop}
-      onClick={() => fileRef.current?.click()}>
+      onClick={() => !uploading && fileRef.current?.click()}>
       <input ref={fileRef} type="file" accept="image/*" onChange={(e) => handleFile(e.target.files[0])} />
-      <div className="afa-dropzone-label">גררי תמונה לכאן, הדביקי (Ctrl+V), או לחצי לבחור</div>
-      <div className="afa-dropzone-label" style={{ fontSize:9, color:"rgba(200,160,80,0.2)" }}>1:1 — תוצג בגודל מלא</div>
+      {uploading ? (
+        <div className="afa-dropzone-label" style={{ color:"rgba(220,180,100,0.6)" }}>מעלה...</div>
+      ) : (
+        <>
+          <div className="afa-dropzone-label">גררי תמונה לכאן, הדביקי (Ctrl+V), או לחצי לבחור</div>
+          <div className="afa-dropzone-label" style={{ fontSize:9, color:"rgba(200,160,80,0.2)" }}>1:1 — נשמרת לצמיתות ונגישה מכל מכשיר</div>
+        </>
+      )}
     </div>
   );
 };
@@ -551,8 +569,12 @@ export default function AIforArchitects() {
   const [showLinks, setShowLinks] = useState(false);
   const [showCinema, setShowCinema] = useState(false);
   const [showWhiteboard, setShowWhiteboard] = useState(false);
-  const [promptImages, setPromptImages] = useState(() => LS.get("afa-prompt-images", {}));
+  const [promptImages, setPromptImages] = useState({});
   const [addingLink, setAddingLink] = useState(false);
+
+  useEffect(() => {
+    listPromptImages().then(setPromptImages).catch(console.error);
+  }, []);
   const [newLinkLabel, setNewLinkLabel] = useState("");
   const [newLinkUrl, setNewLinkUrl] = useState("");
   const mainRef = useRef(null);
