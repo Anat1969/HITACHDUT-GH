@@ -832,12 +832,26 @@ export default function AIforArchitects() {
         {/* Body */}
         <div style={{ flex:1, display:"flex", overflow:"hidden", position:"relative", zIndex:1 }}>
           {showLinks && embedUrl ? (
-            <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
-              <div style={{ flex:1, position:"relative", background:"#000", borderRadius:"0 0 0 0" }}>
-                <div className="afa-cinema-curtain-l" />
-                <div className="afa-cinema-curtain-r" />
-                <div className="afa-cinema-vignette" />
-                <iframe src={embedUrl} style={{ width:"100%", height:"100%", border:"none" }} allowFullScreen allow="autoplay" title="embedded-link" />
+            <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden", padding:"16px 24px 24px" }}>
+              <div className="afa-glass" style={{ flex:1, display:"flex", flexDirection:"column", borderRadius:16, overflow:"hidden", border:"1px solid rgba(200,150,60,0.12)", boxShadow:"0 0 60px rgba(0,0,0,0.5), 0 0 20px rgba(180,120,40,0.06)" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 16px", background:"rgba(8,11,14,0.9)", borderBottom:"1px solid rgba(200,150,60,0.06)", flexShrink:0 }}>
+                  <button className="afa-mode-pill off" onClick={() => setEmbedUrl(null)} style={{ fontSize:10, padding:"4px 12px" }}>&times;</button>
+                  <div style={{ flex:1, fontSize:10, color:"rgba(200,160,80,0.3)", direction:"ltr", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", fontFamily:"monospace" }}>{embedUrl}</div>
+                  <a href={embedUrl} target="_blank" rel="noreferrer" className="afa-mode-pill off" style={{ fontSize:10, padding:"4px 12px", textDecoration:"none" }}>פתח בלשונית &#8599;</a>
+                </div>
+                <div style={{ flex:1, position:"relative", background:"#000" }}>
+                  <div className="afa-cinema-curtain-l" />
+                  <div className="afa-cinema-curtain-r" />
+                  <div className="afa-cinema-vignette" />
+                  <iframe
+                    src={embedUrl}
+                    style={{ width:"100%", height:"100%", border:"none" }}
+                    allowFullScreen
+                    allow="autoplay; clipboard-write; encrypted-media"
+                    sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
+                    title="embedded-link"
+                  />
+                </div>
               </div>
             </div>
           ) : view === "prompts" ? (
