@@ -110,16 +110,12 @@ const CSS = `
   /* ─── Cinema Modal ─── */
   .afa-overlay { position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); display:flex; align-items:center; justify-content:center; animation:afaFadeIn 0.3s ease; }
   @keyframes afaFadeIn { from { opacity:0; } to { opacity:1; } }
-  .afa-cinema { width:90vw; max-width:1200px; height:80vh; display:flex; flex-direction:column; border-radius:20px; overflow:hidden; border:2px solid rgba(200,150,60,0.15); box-shadow:0 0 80px rgba(0,0,0,0.7), 0 0 30px rgba(180,120,40,0.08); background:#0a0d10; }
+  .afa-cinema { width:90vw; max-width:1200px; height:80vh; display:flex; flex-direction:column; border-radius:20px; overflow:hidden; border:1px solid rgba(200,150,60,0.25); box-shadow:0 8px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(200,150,60,0.08), 0 0 80px rgba(180,120,40,0.12), 0 30px 80px -20px rgba(0,0,0,0.8); background:#0a0d10; transform:translateY(-8px); }
   .afa-cinema-bar { display:flex; align-items:center; gap:10px; padding:12px 20px; background:rgba(8,11,14,0.9); border-bottom:1px solid rgba(200,150,60,0.08); flex-shrink:0; }
   .afa-cinema-bar input { flex:1; padding:8px 14px; border-radius:20px; border:1px solid rgba(200,140,50,0.1); background:rgba(12,16,20,0.6); color:rgba(220,200,170,0.8); font-size:12px; font-family:inherit; direction:ltr; outline:none; }
   .afa-cinema-bar input:focus { border-color:rgba(200,140,50,0.3); }
-  .afa-cinema-body { flex:1; background:#000; position:relative; }
+  .afa-cinema-body { flex:1; background:#0c0f12; position:relative; }
   .afa-cinema-body iframe { width:100%; height:100%; border:none; }
-  .afa-cinema-curtain-l, .afa-cinema-curtain-r { position:absolute; top:0; bottom:0; width:24px; z-index:2; pointer-events:none; }
-  .afa-cinema-curtain-l { left:0; background:linear-gradient(90deg, rgba(10,8,6,0.6), transparent); }
-  .afa-cinema-curtain-r { right:0; background:linear-gradient(-90deg, rgba(10,8,6,0.6), transparent); }
-  .afa-cinema-vignette { position:absolute; inset:0; pointer-events:none; z-index:1; box-shadow:inset 0 0 100px rgba(0,0,0,0.5); border-radius:0 0 18px 18px; }
 
   /* ─── Whiteboard ─── */
   .afa-wb-toolbar { display:flex; align-items:center; gap:8px; padding:10px 20px; background:rgba(8,11,14,0.95); border-bottom:1px solid rgba(200,150,60,0.08); flex-shrink:0; flex-wrap:wrap; }
@@ -378,9 +374,6 @@ const CinemaViewer = ({ show, onClose }) => {
           </div>
         )}
         <div className="afa-cinema-body">
-          <div className="afa-cinema-curtain-l" />
-          <div className="afa-cinema-curtain-r" />
-          <div className="afa-cinema-vignette" />
           {liveUrl ? (
             <iframe src={liveUrl} allowFullScreen allow="autoplay; clipboard-write; encrypted-media" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation" title="presentation" />
           ) : (
