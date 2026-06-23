@@ -322,18 +322,40 @@ const SectionSideImage = ({ sectionId, images, setImages }) => {
 
 /* ─── Presentation Cinema Viewer ─── */
 const CinemaViewer = ({ show, onClose }) => {
-  const [url, setUrl] = useState(() => LS.get("afa-presentation-url", ""));
-  const [liveUrl, setLiveUrl] = useState(() => LS.get("afa-presentation-url", ""));
+  const [url, setUrl] = useState("");
+  const [savedUrls, setSavedUrls] = useState(() => LS.get("afa-cinema-urls", []));
+  const [liveUrl, setLiveUrl] = useState(() => {
+    const urls = LS.get("afa-cinema-urls", []);
+    return urls.length > 0 ? urls[0].url : "";
+  });
 
-  const load = () => {
-    let u = url.trim();
+  const formatUrl = (raw) => {
+    let u = raw.trim();
     if (u && !u.startsWith("http")) u = "https://" + u;
     if (u.includes("docs.google.com/presentation") && !u.includes("/embed")) {
       u = u.replace(/\/edit.*$/, "/embed?start=false&loop=false&delayms=3000");
       u = u.replace(/\/pub.*$/, "/embed?start=false&loop=false&delayms=3000");
     }
-    setLiveUrl(u);
-    LS.set("afa-presentation-url", url.trim());
+    return u;
+  };
+
+  const addUrl = () => {
+    const u = url.trim();
+    if (!u) return;
+    const formatted = formatUrl(u);
+    const label = u.replace(/^https?:\/\//, "").split("/")[0].replace("www.", "");
+    const newList = [...savedUrls, { label, url: formatted, raw: u }];
+    setSavedUrls(newList);
+    LS.set("afa-cinema-urls", newList);
+    setLiveUrl(formatted);
+    setUrl("");
+  };
+
+  const removeUrl = (i) => {
+    const newList = savedUrls.filter((_, idx) => idx !== i);
+    setSavedUrls(newList);
+    LS.set("afa-cinema-urls", newList);
+    if (liveUrl === savedUrls[i].url) setLiveUrl(newList.length > 0 ? newList[0].url : "");
   };
 
   if (!show) return null;
@@ -342,18 +364,28 @@ const CinemaViewer = ({ show, onClose }) => {
       <div className="afa-cinema afa-slide-in">
         <div className="afa-cinema-bar">
           <button className="afa-mode-pill off" onClick={onClose} style={{ fontSize:10, padding:"5px 14px" }}>&times; סגור</button>
-          <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="הדביקי קישור למצגת (Google Slides, Canva...)" onKeyDown={(e) => { if (e.key === "Enter") load(); }} />
-          <button className="afa-mode-pill off" onClick={load} style={{ fontSize:10, padding:"5px 14px" }}>טען</button>
+          <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="הדביקי קישור לאפליקציה או מצגת..." onKeyDown={(e) => { if (e.key === "Enter") addUrl(); }} />
+          <button className="afa-mode-pill off" onClick={addUrl} style={{ fontSize:10, padding:"5px 14px" }}>+ הוסף</button>
         </div>
+        {savedUrls.length > 0 && (
+          <div style={{ display:"flex", gap:6, padding:"6px 16px", background:"rgba(8,11,14,0.7)", borderBottom:"1px solid rgba(200,150,60,0.04)", flexWrap:"wrap", alignItems:"center" }}>
+            {savedUrls.map((s, i) => (
+              <div key={i} style={{ display:"inline-flex", alignItems:"center", gap:2 }}>
+                <button onClick={() => setLiveUrl(s.url)} className={`afa-link-pill ${liveUrl === s.url ? "active" : ""}`} style={{ fontSize:10 }}>{s.label}</button>
+                <button onClick={() => removeUrl(i)} style={{ background:"none", border:"none", color:"rgba(212,123,123,0.3)", cursor:"pointer", fontSize:12, padding:"0 2px" }}>&times;</button>
+              </div>
+            ))}
+          </div>
+        )}
         <div className="afa-cinema-body">
           <div className="afa-cinema-curtain-l" />
           <div className="afa-cinema-curtain-r" />
           <div className="afa-cinema-vignette" />
           {liveUrl ? (
-            <iframe src={liveUrl} allowFullScreen allow="autoplay" title="presentation" />
+            <iframe src={liveUrl} allowFullScreen allow="autoplay; clipboard-write; encrypted-media" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation" title="presentation" />
           ) : (
             <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100%", color:"rgba(200,160,80,0.2)", fontSize:14, fontWeight:300 }}>
-              הדביקי קישור למצגת למעלה ולחצי ״טען״
+              הדביקי קישור למעלה ולחצי ״+ הוסף״
             </div>
           )}
         </div>
@@ -682,7 +714,6 @@ export default function AIforArchitects() {
   const [view, setView] = useState("content");
   const [links, setLinks] = useState(() => LS.get("afa-links", LINKS_INIT));
   const [showLinks, setShowLinks] = useState(false);
-  const [embedUrl, setEmbedUrl] = useState(null);
   const [showCinema, setShowCinema] = useState(false);
   const [showWhiteboard, setShowWhiteboard] = useState(false);
   const [promptImages, setPromptImages] = useState({});
@@ -787,7 +818,7 @@ export default function AIforArchitects() {
           <div style={{ display:"flex", gap:6, alignItems:"center" }}>
             <button onClick={()=>setShowWhiteboard(true)} className="afa-mode-pill off" style={{ fontSize:10 }}>לוח ציור</button>
             <button onClick={()=>setShowCinema(true)} className="afa-mode-pill off" style={{ fontSize:10 }}>מצגת</button>
-            <button onClick={()=>{setShowLinks(!showLinks); if(showLinks) setEmbedUrl(null);}} className={`afa-mode-pill ${showLinks?"on":"off"}`}>קישורים</button>
+            <button onClick={()=>setShowLinks(!showLinks)} className={`afa-mode-pill ${showLinks?"on":"off"}`}>קישורים</button>
             <button onClick={()=>setView(view==="prompts"?"content":"prompts")} className={`afa-mode-pill ${view==="prompts"?"on":"off"}`}>
               {view==="prompts"?"תוכן":"פרומפטים"}
             </button>
@@ -811,7 +842,7 @@ export default function AIforArchitects() {
                 </div>
               ) : (
                 <div key={i} style={{ display:"inline-flex", alignItems:"center", gap:2 }}>
-                  <button onClick={() => setEmbedUrl(embedUrl === l.url ? null : l.url)} className={`afa-link-pill ${embedUrl === l.url ? "active" : ""}`} title={l.desc}>{l.label}</button>
+                  <a href={l.url} target="_blank" rel="noreferrer" className="afa-link-pill" title={l.desc}>{l.label}</a>
                 </div>
               )
             ))}
@@ -831,30 +862,7 @@ export default function AIforArchitects() {
 
         {/* Body */}
         <div style={{ flex:1, display:"flex", overflow:"hidden", position:"relative", zIndex:1 }}>
-          {showLinks && embedUrl ? (
-            <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden", padding:"16px 24px 24px" }}>
-              <div className="afa-glass" style={{ flex:1, display:"flex", flexDirection:"column", borderRadius:16, overflow:"hidden", border:"1px solid rgba(200,150,60,0.12)", boxShadow:"0 0 60px rgba(0,0,0,0.5), 0 0 20px rgba(180,120,40,0.06)" }}>
-                <div style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 16px", background:"rgba(8,11,14,0.9)", borderBottom:"1px solid rgba(200,150,60,0.06)", flexShrink:0 }}>
-                  <button className="afa-mode-pill off" onClick={() => setEmbedUrl(null)} style={{ fontSize:10, padding:"4px 12px" }}>&times;</button>
-                  <div style={{ flex:1, fontSize:10, color:"rgba(200,160,80,0.3)", direction:"ltr", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", fontFamily:"monospace" }}>{embedUrl}</div>
-                  <a href={embedUrl} target="_blank" rel="noreferrer" className="afa-mode-pill off" style={{ fontSize:10, padding:"4px 12px", textDecoration:"none" }}>פתח בלשונית &#8599;</a>
-                </div>
-                <div style={{ flex:1, position:"relative", background:"#000" }}>
-                  <div className="afa-cinema-curtain-l" />
-                  <div className="afa-cinema-curtain-r" />
-                  <div className="afa-cinema-vignette" />
-                  <iframe
-                    src={embedUrl}
-                    style={{ width:"100%", height:"100%", border:"none" }}
-                    allowFullScreen
-                    allow="autoplay; clipboard-write; encrypted-media"
-                    sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
-                    title="embedded-link"
-                  />
-                </div>
-              </div>
-            </div>
-          ) : view === "prompts" ? (
+          {view === "prompts" ? (
             <div ref={mainRef} style={{ flex:1, overflow:"auto", padding:"40px 48px", maxWidth:760, margin:"0 auto" }}>
               <div style={{ fontSize:17, fontWeight:400, color:"rgba(220,180,100,0.85)", marginBottom:4, letterSpacing:1 }}>פרומפטים להמחשה</div>
               <div style={{ fontSize:11, color:"rgba(200,160,80,0.25)", marginBottom:36, fontWeight:300 }}>Midjourney — העתיקי והדביקי. הדביקי תמונה ליד כל פרומפט.</div>
